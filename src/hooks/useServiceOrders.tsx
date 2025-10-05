@@ -17,8 +17,8 @@ export type ServiceOrder = {
   };
 };
 
-// TEMPORARY: Mock data until database migration is applied
-const MOCK_MODE = true; // Set to false after migration is applied
+// TODO: Set to false after migration and seed data are applied
+const MOCK_MODE = false;
 
 const MOCK_ORDERS: ServiceOrder[] = [
   {
@@ -26,7 +26,7 @@ const MOCK_ORDERS: ServiceOrder[] = [
     os_number: 'OS-2025-001',
     client_id: 'client1',
     day: 'Segunda',
-    status: 'yellow',
+    status: 'todo',
     type: 'HVAC-R',
     assignee: 'João Silva',
     clients: {
@@ -40,7 +40,7 @@ const MOCK_ORDERS: ServiceOrder[] = [
     os_number: 'OS-2025-002',
     client_id: 'client2',
     day: 'Terça',
-    status: 'blue',
+    status: 'doing',
     type: 'Electrical',
     assignee: 'Maria Santos',
     clients: {
@@ -54,7 +54,7 @@ const MOCK_ORDERS: ServiceOrder[] = [
     os_number: 'OS-2025-003',
     client_id: 'client3',
     day: 'Quarta',
-    status: 'yellow',
+    status: 'todo',
     type: 'HVAC-R',
     assignee: 'Pedro Costa',
     clients: {
@@ -77,12 +77,35 @@ export const useServiceOrders = () => {
       return;
     }
 
-    // This will work after migration creates the tables
-    setLoading(false);
+    try {
+      // Fetch service orders with client details
+      const { data, error } = await supabase
+        .from('service_orders')
+        .select(`
+          *,
+          clients (
+            name,
+            phone,
+            address
+          )
+        `)
+        .order('day', { ascending: true });
+
+      if (error) throw error;
+      setOrders(data || []);
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao carregar ordens de serviço',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateOrderDay = async (orderId: string, newDay: string) => {
-    // Update data locally
+    // Optimistic update
     setOrders(prev =>
       prev.map(order =>
         order.id === orderId ? { ...order, day: newDay } : order
@@ -92,23 +115,40 @@ export const useServiceOrders = () => {
     if (MOCK_MODE) {
       toast({
         title: 'Ordem reagendada (Mock)',
-        description: 'A ordem de serviço foi movida. Aplique a migração do banco para persistir mudanças.',
+        description: 'Aplique a migração e defina MOCK_MODE=false para persistir.',
       });
       return;
     }
 
-    // This will work after migration creates the tables
-    toast({
-      title: 'Ordem reagendada',
-      description: 'A ordem de serviço foi movida com sucesso.',
-    });
+    try {
+      // Update day in database
+      const { error } = await supabase
+        .from('service_orders')
+        .update({ day: newDay })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Ordem reagendada',
+        description: 'A ordem de serviço foi movida com sucesso.',
+      });
+    } catch (error: any) {
+      // Revert optimistic update on error
+      await fetchOrders();
+      toast({
+        title: 'Erro ao reagendar',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   useEffect(() => {
     fetchOrders();
 
     if (!MOCK_MODE) {
-      // Set up realtime subscription only when not in mock mode
+      // Set up realtime subscription for live updates
       const channel = supabase
         .channel('service_orders_changes')
         .on(

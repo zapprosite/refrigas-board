@@ -17,8 +17,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// TEMPORARY: Mock data until database migration is applied
-const MOCK_MODE = true; // Set to false after migration is applied
+// TODO: Set to false after migration and seed data are applied
+const MOCK_MODE = false;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -38,7 +38,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           setTimeout(() => {
             if (MOCK_MODE) {
-              // Mock role assignment for testing
               setRole('Admin');
               setIsApproved(true);
               setLoading(false);
@@ -75,9 +74,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
-    // This function will work after migration creates the tables
-    // For now, it's not called due to MOCK_MODE
-    setLoading(false);
+    try {
+      // Fetch user role from user_roles table
+      const { data: userRole, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (roleError) throw roleError;
+
+      // Fetch approval status from profiles
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('approved_at')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      setRole((userRole?.role as UserRole) || null);
+      setIsApproved(!!profile?.approved_at);
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      setRole(null);
+      setIsApproved(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signInWithGoogle = async () => {
