@@ -1,25 +1,23 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut } from "lucide-react";
 import LoginPage from "@/components/LoginPage";
 import KanbanBoard from "@/components/KanbanBoard";
 import CollaboratorView from "@/components/CollaboratorView";
-
-type UserRole = 'admin' | 'secretary' | 'collaborator' | null;
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const [userRole, setUserRole] = useState<UserRole>(null);
+  const { user, role, isApproved, loading, signOut } = useAuth();
 
-  const handleLogin = (role: UserRole) => {
-    setUserRole(role);
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
 
-  const handleLogout = () => {
-    setUserRole(null);
-  };
-
-  if (!userRole) {
-    return <LoginPage onLogin={handleLogin} />;
+  if (!user || !isApproved || !role) {
+    return <LoginPage />;
   }
 
   return (
@@ -32,16 +30,16 @@ const Index = () => {
               REFRIMIX TECNOLOGIA
             </h1>
             <p className="text-xs text-muted-foreground">
-              {userRole === 'admin' && 'Administrador'}
-              {userRole === 'secretary' && 'Secretária'}
-              {userRole === 'collaborator' && 'Colaborador'}
+              {role === 'Admin' && 'Administrador'}
+              {role === 'Secretary' && 'Secretária'}
+              {role === 'Collaborator' && 'Colaborador'}
             </p>
           </div>
 
           <Button 
             variant="outline" 
             size="sm"
-            onClick={handleLogout}
+            onClick={signOut}
             className="gap-2"
           >
             <LogOut className="w-4 h-4" />
@@ -52,10 +50,10 @@ const Index = () => {
 
       {/* Main Content */}
       <main>
-        {(userRole === 'admin' || userRole === 'secretary') && (
-          <KanbanBoard role={userRole} />
+        {(role === 'Admin' || role === 'Secretary') && (
+          <KanbanBoard role={role} />
         )}
-        {userRole === 'collaborator' && <CollaboratorView />}
+        {role === 'Collaborator' && <CollaboratorView />}
       </main>
     </div>
   );

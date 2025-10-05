@@ -1,93 +1,53 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, Wrench, Zap, Phone, MapPin } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-
-type ServiceType = 'hvac' | 'electrical';
-type ServiceStatus = 'pending' | 'in_progress' | 'completed';
-
-interface ServiceOrder {
-  id: string;
-  osNumber: string;
-  client: string;
-  phone: string;
-  address: string;
-  serviceType: ServiceType;
-  status: ServiceStatus;
-  assignee?: string;
-  day: string;
-}
+import { useServiceOrders } from "@/hooks/useServiceOrders";
 
 const DAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
-const DUMMY_ORDERS: ServiceOrder[] = [
-  {
-    id: '1',
-    osNumber: 'OS-2025-001',
-    client: 'Empresa ABC Ltda',
-    phone: '(11) 98765-4321',
-    address: 'Av. Paulista, 1000',
-    serviceType: 'hvac',
-    status: 'pending',
-    assignee: 'João Silva',
-    day: 'Segunda'
-  },
-  {
-    id: '2',
-    osNumber: 'OS-2025-002',
-    client: 'Comércio XYZ',
-    phone: '(11) 91234-5678',
-    address: 'Rua Augusta, 500',
-    serviceType: 'electrical',
-    status: 'in_progress',
-    assignee: 'Maria Santos',
-    day: 'Terça'
-  },
-  {
-    id: '3',
-    osNumber: 'OS-2025-003',
-    client: 'Indústria DEF',
-    phone: '(11) 99999-8888',
-    address: 'Rod. Anhanguera, km 20',
-    serviceType: 'hvac',
-    status: 'pending',
-    assignee: 'Pedro Costa',
-    day: 'Quarta'
-  },
-];
+const KanbanBoard = ({ role }: { role: 'Admin' | 'Secretary' | 'Collaborator' }) => {
+  const { orders, loading, updateOrderDay } = useServiceOrders();
+  const canDragDrop = role === 'Admin' || role === 'Secretary';
 
-const KanbanBoard = ({ role }: { role: 'admin' | 'secretary' | 'collaborator' }) => {
-  const [orders, setOrders] = useState(DUMMY_ORDERS);
-  const canDragDrop = role === 'admin' || role === 'secretary';
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando ordens de serviço...</p>
+      </div>
+    );
+  }
 
-  const handleDragEnd = (result: DropResult) => {
+  const handleDragEnd = async (result: DropResult) => {
     if (!canDragDrop) return;
     if (!result.destination) return;
 
-    const sourceDay = result.source.droppableId;
     const destDay = result.destination.droppableId;
-    
-    if (sourceDay === destDay) return;
+    const orderId = result.draggableId;
 
-    const newOrders = [...orders];
-    const movedOrder = newOrders.find(o => o.id === result.draggableId);
-    if (movedOrder) {
-      movedOrder.day = destDay;
-      setOrders(newOrders);
-    }
+    await updateOrderDay(orderId, destDay);
   };
 
   const getOrdersByDay = (day: string) => {
     return orders.filter(o => o.day === day);
   };
 
-  const getStatusColor = (status: ServiceStatus) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30';
-      case 'in_progress': return 'bg-blue-500/20 text-blue-500 border-blue-500/30';
-      case 'completed': return 'bg-green-500/20 text-green-500 border-green-500/30';
+      case 'yellow': return 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30';
+      case 'blue': return 'bg-blue-500/20 text-blue-500 border-blue-500/30';
+      case 'green': return 'bg-green-500/20 text-green-500 border-green-500/30';
+      default: return 'bg-gray-500/20 text-gray-500 border-gray-500/30';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'yellow': return 'Pendente';
+      case 'blue': return 'Em Andamento';
+      case 'green': return 'Concluído';
+      default: return status;
     }
   };
 
@@ -142,36 +102,34 @@ const KanbanBoard = ({ role }: { role: 'admin' | 'secretary' | 'collaborator' })
                           >
                             <div className="flex items-start justify-between">
                               <div className="space-y-1">
-                                <p className="font-semibold text-sm">{order.osNumber}</p>
-                                <p className="text-xs text-muted-foreground">{order.client}</p>
+                                <p className="font-semibold text-sm">{order.os_number}</p>
+                                <p className="text-xs text-muted-foreground">{order.clients?.name}</p>
                               </div>
                               <Badge className={getStatusColor(order.status)}>
-                                {order.status === 'pending' && 'Pendente'}
-                                {order.status === 'in_progress' && 'Em Andamento'}
-                                {order.status === 'completed' && 'Concluído'}
+                                {getStatusLabel(order.status)}
                               </Badge>
                             </div>
 
                             <div className="space-y-2 text-xs">
                               <div className="flex items-center gap-2 text-muted-foreground">
                                 <Phone className="w-3 h-3" />
-                                {order.phone}
+                                {order.clients?.phone || 'N/A'}
                               </div>
                               <div className="flex items-center gap-2 text-muted-foreground">
                                 <MapPin className="w-3 h-3" />
-                                {order.address}
+                                {order.clients?.address || 'N/A'}
                               </div>
                             </div>
 
                             <div className="flex items-center justify-between pt-2 border-t border-border">
                               <div className="flex items-center gap-1">
-                                {order.serviceType === 'hvac' ? (
+                                {order.type === 'HVAC-R' ? (
                                   <Wrench className="w-4 h-4 text-primary" />
                                 ) : (
                                   <Zap className="w-4 h-4 text-accent" />
                                 )}
                                 <span className="text-xs font-medium">
-                                  {order.serviceType === 'hvac' ? 'HVAC-R' : 'Elétrico'}
+                                  {order.type}
                                 </span>
                               </div>
                               {order.assignee && (

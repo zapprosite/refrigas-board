@@ -1,12 +1,48 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar, Chrome } from "lucide-react";
+import { Calendar, Chrome, AlertCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-interface LoginPageProps {
-  onLogin: (role: 'admin' | 'secretary' | 'collaborator') => void;
-}
+const LoginPage = () => {
+  const { signInWithGoogle, user, isApproved, loading } = useAuth();
 
-const LoginPage = ({ onLogin }: LoginPageProps) => {
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
+
+  // User logged in but not approved yet
+  if (user && !isApproved) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-8 space-y-6 shadow-orange">
+          <div className="text-center space-y-2">
+            <Calendar className="w-12 h-12 text-primary mx-auto" />
+            <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+              REFRIMIX TECNOLOGIA
+            </h1>
+          </div>
+          
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Sua conta está aguardando aprovação do administrador.
+              Você receberá acesso em breve.
+            </AlertDescription>
+          </Alert>
+
+          <div className="text-center text-sm text-muted-foreground">
+            Email: {user.email}
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 space-y-6 shadow-cyan-glow">
@@ -27,39 +63,11 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
           <Button 
             className="w-full gap-2 shadow-orange hover:shadow-cyan-glow transition-all"
             size="lg"
+            onClick={signInWithGoogle}
           >
             <Chrome className="w-5 h-5" />
             Entrar com Google
           </Button>
-
-          <div className="pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground text-center mb-3">
-              Demo: Selecione uma função
-            </p>
-            <div className="space-y-2">
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => onLogin('admin')}
-              >
-                Admin
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => onLogin('secretary')}
-              >
-                Secretária
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => onLogin('collaborator')}
-              >
-                Colaborador
-              </Button>
-            </div>
-          </div>
         </div>
 
         <p className="text-xs text-muted-foreground text-center">
