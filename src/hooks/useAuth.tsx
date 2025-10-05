@@ -59,6 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserRole = async (userId: string) => {
     try {
+      // @ts-expect-error - Tables will be available after migration is applied
       const { data: userRole, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -67,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (roleError) throw roleError;
 
+      // @ts-expect-error - Tables will be available after migration is applied
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('approved_at')
@@ -75,8 +77,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (profileError) throw profileError;
 
-      setRole(userRole?.role as UserRole || null);
-      setIsApproved(!!profile?.approved_at);
+      setRole(userRole?.role || null);
+      setIsApproved(profile?.approved_at ? true : false);
     } catch (error) {
       console.error('Error fetching user role:', error);
       setRole(null);
