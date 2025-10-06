@@ -109,16 +109,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: window.location.origin,
         },
       });
-      if (error) throw error;
+      
+      if (error) {
+        // Check for Google provider configuration issues
+        if (
+          error.message?.includes('Unsupported provider') ||
+          error.message?.includes('validation_failed') ||
+          error.message?.includes('Provider not enabled')
+        ) {
+          toast({
+            title: 'Google OAuth não configurado',
+            description: 'Configure o Google Provider no Lovable Cloud. Consulte AuthTroubleshooting.md para instruções detalhadas.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Erro ao fazer login',
+            description: error.message,
+            variant: 'destructive',
+          });
+        }
+        throw error;
+      }
     } catch (error: any) {
-      toast({
-        title: 'Erro ao fazer login',
-        description: error.message,
-        variant: 'destructive',
-      });
+      console.error('Google sign-in error:', error);
     }
   };
 

@@ -1,8 +1,21 @@
-# Welcome to your Lovable project
+# REFRIMIX TECNOLOGIA - Agenda Sincronizada
+
+Sistema de gestão para serviços HVAC-R e Elétricos com controle de acesso por papel (role-based) e Kanban sincronizado.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/7fc8ace3-a030-4520-b825-0d783a5d2323
+
+## ⚡ Quick Start
+
+**IMPORTANTE**: Configure o Google OAuth antes de usar. Veja [`AuthTroubleshooting.md`](./AuthTroubleshooting.md)
+
+1. **Google OAuth**: Configure Client ID/Secret no Lovable Cloud
+2. **Primeiro Admin**: Após login, execute SQL para aprovar e definir role
+3. **Testar**: Login → Aprovação → Kanban → Checklists → Fotos → Laudos
+
+**Documentação completa**: [`SETUP_INSTRUCTIONS.md`](./SETUP_INSTRUCTIONS.md)  
+**Database Schema**: [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md)
 
 ## How can I edit this code?
 
