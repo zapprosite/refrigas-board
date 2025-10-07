@@ -1,9 +1,8 @@
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, User, Wrench, Zap, Phone, MapPin } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { useServiceOrders } from "@/hooks/useServiceOrders";
+import { ServiceOrderCard } from "@/components/ServiceOrderCard";
 
 const DAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
@@ -31,24 +30,6 @@ const KanbanBoard = ({ role }: { role: 'Admin' | 'Secretary' | 'Collaborator' })
 
   const getOrdersByDay = (day: string) => {
     return orders.filter(o => o.day === day);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'yellow': return 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30';
-      case 'blue': return 'bg-blue-500/20 text-blue-500 border-blue-500/30';
-      case 'green': return 'bg-green-500/20 text-green-500 border-green-500/30';
-      default: return 'bg-gray-500/20 text-gray-500 border-gray-500/30';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'yellow': return 'Pendente';
-      case 'blue': return 'Em Andamento';
-      case 'green': return 'Concluído';
-      default: return status;
-    }
   };
 
   return (
@@ -92,54 +73,17 @@ const KanbanBoard = ({ role }: { role: 'Admin' | 'Secretary' | 'Collaborator' })
                         isDragDisabled={!canDragDrop}
                       >
                         {(provided, snapshot) => (
-                          <Card
+                          <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`p-4 space-y-3 transition-all ${
-                              snapshot.isDragging ? 'shadow-cyan-glow rotate-2' : 'hover:shadow-orange'
-                            } ${canDragDrop ? 'cursor-move' : ''}`}
                           >
-                            <div className="flex items-start justify-between">
-                              <div className="space-y-1">
-                                <p className="font-semibold text-sm">{order.os_number}</p>
-                                <p className="text-xs text-muted-foreground">{order.clients?.name}</p>
-                              </div>
-                              <Badge className={getStatusColor(order.status)}>
-                                {getStatusLabel(order.status)}
-                              </Badge>
-                            </div>
-
-                            <div className="space-y-2 text-xs">
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                <Phone className="w-3 h-3" />
-                                {order.clients?.phone || 'N/A'}
-                              </div>
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                <MapPin className="w-3 h-3" />
-                                {order.clients?.address || 'N/A'}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-2 border-t border-border">
-                              <div className="flex items-center gap-1">
-                                {order.type === 'HVAC-R' ? (
-                                  <Wrench className="w-4 h-4 text-primary" />
-                                ) : (
-                                  <Zap className="w-4 h-4 text-accent" />
-                                )}
-                                <span className="text-xs font-medium">
-                                  {order.type}
-                                </span>
-                              </div>
-                              {order.assignee && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <User className="w-3 h-3" />
-                                  {order.assignee}
-                                </div>
-                              )}
-                            </div>
-                          </Card>
+                            <ServiceOrderCard
+                              order={order}
+                              isDragging={snapshot.isDragging}
+                              canDrag={canDragDrop}
+                              dragHandleProps={provided.dragHandleProps}
+                            />
+                          </div>
                         )}
                       </Draggable>
                     ))}

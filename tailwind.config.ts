@@ -47,6 +47,18 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        'status-pending': {
+          DEFAULT: "hsl(var(--status-pending))",
+          foreground: "hsl(var(--status-pending-foreground))",
+        },
+        'status-in-progress': {
+          DEFAULT: "hsl(var(--status-in-progress))",
+          foreground: "hsl(var(--status-in-progress-foreground))",
+        },
+        'status-completed': {
+          DEFAULT: "hsl(var(--status-completed))",
+          foreground: "hsl(var(--status-completed-foreground))",
+        },
       },
       backgroundImage: {
         'gradient-hero': 'var(--gradient-hero)',
