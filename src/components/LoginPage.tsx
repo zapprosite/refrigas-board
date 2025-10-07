@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Calendar, Chrome, AlertCircle } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Calendar, Chrome, AlertCircle, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LoginPage = () => {
-  const { signInWithGoogle, user, isApproved, loading } = useAuth();
+  const { signInWithGoogle, signOut, user, isApproved, loading } = useAuth();
 
   if (loading) {
     return (
@@ -18,26 +18,52 @@ const LoginPage = () => {
   // User logged in but not approved yet
   if (user && !isApproved) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md p-8 space-y-6 shadow-orange">
-          <div className="text-center space-y-2">
-            <Calendar className="w-12 h-12 text-primary mx-auto" />
-            <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              REFRIMIX TECNOLOGIA
-            </h1>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/30 p-4">
+        <Card className="w-full max-w-md shadow-elegant border-status-pending/20">
+          <CardHeader className="space-y-3 text-center pb-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-status-pending/10 flex items-center justify-center">
+              <Clock className="w-8 h-8 text-status-pending" />
+            </div>
+            <CardTitle className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+              Aguardando Aprovação
+            </CardTitle>
+            <CardDescription className="text-base">
+              Login realizado com sucesso!
+            </CardDescription>
+          </CardHeader>
           
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Sua conta está aguardando aprovação do administrador.
-              Você receberá acesso em breve.
-            </AlertDescription>
-          </Alert>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg bg-status-pending/5 border border-status-pending/20 p-4">
+              <p className="text-xs text-muted-foreground text-center mb-1">
+                Conta cadastrada:
+              </p>
+              <p className="text-center font-medium text-foreground">
+                {user.email}
+              </p>
+            </div>
+            
+            <Alert className="border-status-pending/20 bg-status-pending/5">
+              <AlertCircle className="h-4 w-4 text-status-pending" />
+              <AlertDescription className="text-sm">
+                <strong className="block mb-1">Status: Pendente de aprovação</strong>
+                Um administrador precisa aprovar seu acesso e atribuir uma função 
+                (Admin, Secretária ou Colaborador) para que você possa utilizar o sistema.
+              </AlertDescription>
+            </Alert>
 
-          <div className="text-center text-sm text-muted-foreground">
-            Email: {user.email}
-          </div>
+            <div className="pt-2 space-y-2">
+              <p className="text-xs text-muted-foreground text-center">
+                Entre em contato com o administrador do sistema para concluir seu cadastro.
+              </p>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={signOut}
+              >
+                Sair
+              </Button>
+            </div>
+          </CardContent>
         </Card>
       </div>
     );
