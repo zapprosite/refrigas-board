@@ -95,8 +95,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setRole((userRole?.role as UserRole) || null);
       setIsApproved(!!profile?.approved_at);
-    } catch (error) {
-      console.error('Error fetching user role:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Error fetching user role:', message);
       setRole(null);
       setIsApproved(false);
     } finally {
@@ -134,8 +135,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         throw error;
       }
-    } catch (error: any) {
-      console.error('Google sign-in error:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Google sign-in error:', message);
     }
   };
 
@@ -147,10 +149,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(null);
       setRole(null);
       setIsApproved(false);
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       toast({
         title: 'Erro ao sair',
-        description: error.message,
+        description: message,
         variant: 'destructive',
       });
     }

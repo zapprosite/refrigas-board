@@ -2,30 +2,38 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Phone, MapPin, User, Wrench, Zap } from "lucide-react";
 import type { ServiceOrder } from "@/hooks/useServiceOrders";
+import type { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 
 interface ServiceOrderCardProps {
   order: ServiceOrder;
   isDragging?: boolean;
   canDrag?: boolean;
-  dragHandleProps?: any;
+  dragHandleProps?: DraggableProvidedDragHandleProps;
 }
 
 const getStatusConfig = (status: string) => {
+  // Map DB status values to user-facing labels + styles.
+  // Database uses: 'todo', 'doing', 'done', 'green'
   switch (status) {
-    case 'yellow':
+    case 'todo':
       return {
         label: 'Pendente',
         className: 'bg-status-pending/20 text-status-pending-foreground border-status-pending/30'
       };
-    case 'blue':
+    case 'doing':
       return {
         label: 'Em Andamento',
         className: 'bg-status-in-progress/20 text-status-in-progress-foreground border-status-in-progress/30'
       };
-    case 'green':
+    case 'done':
       return {
         label: 'Concluído',
         className: 'bg-status-completed/20 text-status-completed-foreground border-status-completed/30'
+      };
+    case 'green':
+      return {
+        label: 'Finalizado',
+        className: 'bg-status-final/20 text-status-final-foreground border-status-final/30'
       };
     default:
       return {

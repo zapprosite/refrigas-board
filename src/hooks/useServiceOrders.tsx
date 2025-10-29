@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -70,7 +70,7 @@ export const useServiceOrders = () => {
   const [loading, setLoading] = useState(!MOCK_MODE);
   const { toast } = useToast();
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     if (MOCK_MODE) {
       setOrders(MOCK_ORDERS);
       setLoading(false);
@@ -93,16 +93,17 @@ export const useServiceOrders = () => {
 
       if (error) throw error;
       setOrders(data || []);
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       toast({
         title: 'Erro ao carregar ordens de serviço',
-        description: error.message,
+        description: message,
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const updateOrderDay = async (orderId: string, newDay: string) => {
     // Optimistic update
@@ -133,19 +134,20 @@ export const useServiceOrders = () => {
         title: 'Ordem reagendada',
         description: 'A ordem de serviço foi movida com sucesso.',
       });
-    } catch (error: any) {
+    } catch (err: unknown) {
       // Revert optimistic update on error
+      const message = err instanceof Error ? err.message : String(err);
       await fetchOrders();
       toast({
         title: 'Erro ao reagendar',
-        description: error.message,
+        description: message,
         variant: 'destructive',
       });
     }
   };
 
   useEffect(() => {
-    fetchOrders();
+  fetchOrders();
 
     if (!MOCK_MODE) {
       // Set up realtime subscription for live updates
@@ -165,10 +167,20 @@ export const useServiceOrders = () => {
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
+        try {
+          const possible = channel as unknown as { unsubscribe?: () => void };
+          if (channel && typeof possible.unsubscribe === 'function') {
+            possible.unsubscribe();
+          } else {
+            supabase.removeChannel(channel);
+          }
+        } catch (e) {
+          // best-effort cleanup
+          try { supabase.removeChannel(channel); } catch (e2) { console.debug('removeChannel failed', e2); }
+        }
       };
     }
-  }, []);
+  }, [fetchOrders]);
 
   return { orders, loading, updateOrderDay, refetch: fetchOrders };
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,7 +15,7 @@ export const usePhotos = (osId: string | null) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  const fetchPhotos = async () => {
+  const fetchPhotos = useCallback(async () => {
     if (!osId) {
       setLoading(false);
       return;
@@ -30,16 +30,17 @@ export const usePhotos = (osId: string | null) => {
 
       if (error) throw error;
       setPhotos(data || []);
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       toast({
         title: 'Erro ao carregar fotos',
-        description: error.message,
+        description: message,
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [osId, toast]);
 
   const uploadPhoto = async (file: File) => {
     if (!osId) return;
@@ -69,10 +70,11 @@ export const usePhotos = (osId: string | null) => {
       });
 
       await fetchPhotos();
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       toast({
         title: 'Erro ao enviar foto',
-        description: error.message,
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -113,9 +115,18 @@ export const usePhotos = (osId: string | null) => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      try {
+        const possible = channel as unknown as { unsubscribe?: () => void };
+        if (channel && typeof possible.unsubscribe === 'function') {
+          possible.unsubscribe();
+        } else {
+          supabase.removeChannel(channel);
+        }
+      } catch (e) {
+        try { supabase.removeChannel(channel); } catch (e2) { console.debug('removeChannel failed', e2); }
+      }
     };
-  }, [osId]);
+  }, [fetchPhotos, osId]);
 
   return {
     photos,
