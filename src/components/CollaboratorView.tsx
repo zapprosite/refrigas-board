@@ -50,9 +50,11 @@ const CollaboratorView = () => {
 
         if (error && error.code !== 'PGRST116') throw error;
         setReport(data?.content || '');
-      } catch (error: any) {
-        console.error('Error loading report:', error);
-      }
+      } catch (err: unknown) {
+          // Narrow unknown to Error when possible
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error('Error loading report:', msg);
+        }
     };
 
     loadReport();
@@ -84,10 +86,11 @@ const CollaboratorView = () => {
         title: 'Laudo salvo',
         description: 'O laudo técnico foi salvo com sucesso.',
       });
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       toast({
         title: 'Erro ao salvar laudo',
-        description: error.message,
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -307,8 +310,9 @@ const PhotoPreview = ({
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    // include getPhotoUrl in deps to avoid stale closure if function changes
     getPhotoUrl(path).then(setUrl);
-  }, [path]);
+  }, [path, getPhotoUrl]);
 
   if (!url) {
     return <div className="w-full h-full bg-muted animate-pulse" />;
